@@ -629,25 +629,17 @@ JOIN Student s ON rp.student_id = s.student_id
 GROUP BY s.student_id, s.first_name, s.last_name
 ORDER BY total_paid DESC FETCH FIRST 5 ROWS ONLY;
 
+Business queries
 
-section*{10. Queries}
-
-subsection*{Business Queries}
-
-\subsubsection*{1. Find students with unpaid invoices}
-\textbf{Goal:} Identify students who have pending payments.  
-\begin{verbatim}
+1. Find students with unpaid invoices
 SELECT s.student_id, s.first_name, s.last_name, ri.invoice_id, ri.total_due
 FROM Student s
 JOIN Allocation a ON s.student_id = a.student_id
 JOIN Rent_Invoice ri ON a.allocation_id = ri.allocation_id
 WHERE ri.invoice_status = 'Open'
 ORDER BY ri.due_date;
-\end{verbatim}
 
-\subsubsection*{2. Total revenue collected per hostel block}
-\textbf{Goal:} Track hostel income from rent payments.  
-\begin{verbatim}
+2. Total revenue collected per hostel block
 SELECT hb.block_name, SUM(rp.amount_paid) AS total_collected
 FROM Rent_Payment rp
 JOIN Rent_Invoice ri ON rp.invoice_id = ri.invoice_id
@@ -655,43 +647,31 @@ JOIN Allocation a ON ri.allocation_id = a.allocation_id
 JOIN Room r ON a.room_id = r.room_id
 JOIN Hostel_Block hb ON r.block_id = hb.block_id
 GROUP BY hb.block_name;
-\end{verbatim}
 
-\subsubsection*{3. Most common complaint types}
-\textbf{Goal:} Highlight the most frequent issues students raise.  
-\begin{verbatim}
+3. Most common complaint types
 SELECT rt.type_name, COUNT(c.complaint_id) AS complaint_count
 FROM Complaint c
 JOIN Request_Type rt ON c.request_type_id = rt.request_type_id
 GROUP BY rt.type_name
 ORDER BY complaint_count DESC;
-\end{verbatim}
 
-\subsubsection*{4. Average rent by room type}
-\textbf{Goal:} Provide pricing insights for room categories.  
-\begin{verbatim}
+4. Average rent by room type
 SELECT rt.type_name, AVG(r.base_rent_amount) AS avg_rent
 FROM Room r
 JOIN Room_Type rt ON r.room_type_id = rt.room_type_id
 GROUP BY rt.type_name;
-\end{verbatim}
 
-\subsubsection*{5. Emergency contacts for students}
-\textbf{Goal:} Quickly retrieve student emergency contacts.  
-\begin{verbatim}
+5. Emergency contacts for students
 SELECT s.first_name, s.last_name, ec.contact_name, ec.phone_number
 FROM Student s
 JOIN Student_EmergencyContact ec ON s.student_id = ec.student_id;
-\end{verbatim}
 
 
 
 
-\subsection*{Optimization Queries}
+Optimization Queries
 
-\subsubsection*{Technique 1: Using Indexes}
-\textbf{Goal:} Speed up search for unpaid invoices.  
-\begin{verbatim}
+Technique 1: Using Indexes
 -- Create index
 CREATE INDEX idx_invoice_status ON Rent_Invoice(invoice_status);
 
@@ -703,13 +683,10 @@ FROM Student s
 JOIN Allocation a ON s.student_id = a.student_id
 JOIN Rent_Invoice ri ON a.allocation_id = ri.allocation_id
 WHERE ri.invoice_status = 'Open';
-\end{verbatim}
 
 ---
 
-\subsubsection*{Technique 2: Replacing Nested Subqueries with JOINs}
-\textbf{Before (inefficient):}
-\begin{verbatim}
+Technique 2: Replacing Nested Subqueries with JOINs
 SELECT s.first_name, s.last_name
 FROM Student s
 WHERE s.student_id IN (
@@ -717,21 +694,16 @@ WHERE s.student_id IN (
     FROM Allocation a
     WHERE a.status = 'Active'
 );
-\end{verbatim}
 
-\textbf{After (optimized with JOIN):}
-\begin{verbatim}
+After (optimized with JOIN):
 SELECT DISTINCT s.first_name, s.last_name
 FROM Student s
 JOIN Allocation a ON s.student_id = a.student_id
 WHERE a.status = 'Active';
-\end{verbatim}
 
 ---
 
-\subsubsection*{Technique 3: Using LISTAGG for Aggregation}
-\textbf{Goal:} Aggregate room features instead of multiple rows.  
-\begin{verbatim}
+Technique 3: Using LISTAGG for Aggregation
 SELECT r.room_number,
        LISTAGG(f.feature_name, ', ') 
        WITHIN GROUP (ORDER BY f.feature_name) AS features
@@ -739,25 +711,6 @@ FROM Room r
 JOIN Room_Has_Feature rhf ON r.room_id = rhf.room_id
 JOIN Room_Feature f ON rhf.feature_id = f.feature_id
 GROUP BY r.room_number;
-\end{verbatim}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
