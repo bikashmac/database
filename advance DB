@@ -1,0 +1,764 @@
+-- Table: Department
+CREATE TABLE Department (
+    department_id INT PRIMARY KEY,
+    dept_name VARCHAR2(100) UNIQUE NOT NULL,
+    faculty_name VARCHAR2(100),
+    office_phone VARCHAR2(20),
+    office_email VARCHAR2(100)
+);
+
+-- Table: Course
+CREATE TABLE Course (
+    course_id INT PRIMARY KEY,
+    course_code VARCHAR2(20) UNIQUE NOT NULL,
+    course_name VARCHAR2(100) NOT NULL,
+    course_level VARCHAR2(10),
+    department_id INT,
+    FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+-- Table: Student
+CREATE TABLE Student (
+    student_id INT PRIMARY KEY,
+    first_name VARCHAR2(50),
+    last_name VARCHAR2(50),
+    gender CHAR(1) CHECK (gender IN ('M', 'F', 'O')),
+    email VARCHAR2(100) UNIQUE,
+    phone VARCHAR2(20),
+    admission_year INT,
+    department_id INT,
+    active_flag CHAR(1) DEFAULT 'Y',
+    FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+-- Table: Hostel_Block
+CREATE TABLE Hostel_Block (
+    block_id INT PRIMARY KEY,
+    block_name VARCHAR2(50) UNIQUE,
+    address_line1 VARCHAR2(100),
+    address_line2 VARCHAR2(100),
+    city VARCHAR2(50),
+    postcode VARCHAR2(10),
+    capacity_rooms INT,
+    gender_restriction VARCHAR2(10)
+);
+
+-- Table: Room_Type
+CREATE TABLE Room_Type (
+    room_type_id INT PRIMARY KEY,
+    type_name VARCHAR2(50) UNIQUE,
+    description VARCHAR2(1000),
+    default_capacity INT,
+    default_rent_modifier NUMBER(10, 2)
+);
+
+-- Table: Room
+CREATE TABLE Room (
+    room_id INT PRIMARY KEY,
+    block_id INT,
+    room_number VARCHAR2(10),
+    room_type_id INT,
+    floor_no INT,
+    capacity INT,
+    base_rent_amount NUMBER(10, 2),
+    is_active CHAR(1) DEFAULT 'Y',
+    FOREIGN KEY (block_id) REFERENCES Hostel_Block(block_id),
+    FOREIGN KEY (room_type_id) REFERENCES Room_Type(room_type_id),
+    UNIQUE (block_id, room_number)
+);
+
+-- Table: Allocation
+CREATE TABLE Allocation (
+    allocation_id INT PRIMARY KEY,
+    student_id INT,
+    room_id INT,
+    allocation_start DATE,
+    allocation_end DATE,
+    status VARCHAR2(20),
+    allocated_by_staff_id INT,
+    FOREIGN KEY (student_id) REFERENCES Student(student_id),
+    FOREIGN KEY (room_id) REFERENCES Room(room_id)
+);
+
+-- Table: Rent_Invoice
+CREATE TABLE Rent_Invoice (
+    invoice_id INT PRIMARY KEY,
+    allocation_id INT,
+    billing_period_start DATE,
+    billing_period_end DATE,
+    rent_amount NUMBER(10, 2),
+    late_fee_amount NUMBER(10, 2),
+    total_due NUMBER(10, 2),
+    generated_date DATE,
+    due_date DATE,
+    invoice_status VARCHAR2(20),
+    FOREIGN KEY (allocation_id) REFERENCES Allocation(allocation_id)
+);
+
+-- Table: Payment_Method
+CREATE TABLE Payment_Method (
+    payment_method_id INT PRIMARY KEY,
+    method_name VARCHAR2(50) UNIQUE,
+    description VARCHAR2(200),
+    is_active CHAR(1) DEFAULT 'Y'
+);
+
+-- Table: Rent_Payment
+CREATE TABLE Rent_Payment (
+    payment_id INT PRIMARY KEY,
+    invoice_id INT,
+    student_id INT,
+    payment_method_id INT,
+    amount_paid NUMBER(10, 2),
+    payment_date DATE,
+    transaction_ref VARCHAR2(50) UNIQUE,
+    recorded_by_staff_id INT,
+    FOREIGN KEY (invoice_id) REFERENCES Rent_Invoice(invoice_id),
+    FOREIGN KEY (student_id) REFERENCES Student(student_id),
+    FOREIGN KEY (payment_method_id) REFERENCES Payment_Method(payment_method_id)
+);
+
+
+
+-- Insert into Department
+INSERT INTO Department VALUES (1, 'Computer Science', 'Engineering', '0123456789', 'cs@university.edu');
+INSERT INTO Department VALUES (2, 'Mechanical Engineering', 'Engineering', '0123456790', 'me@university.edu');
+INSERT INTO Department VALUES (3, 'Business Administration', 'Business', '0123456791', 'ba@university.edu');
+
+-- Insert into Course
+INSERT INTO Course VALUES (1, 'CS101', 'BSc Computer Science', 'UG', 1);
+INSERT INTO Course VALUES (2, 'ME201', 'BEng Mechanical', 'UG', 2);
+INSERT INTO Course VALUES (3, 'BA301', 'MBA', 'PG', 3);
+
+-- Insert into Student
+INSERT INTO Student VALUES (101, 'Alice', 'Smith', 'F', 'alice@example.com', '9876543210', 2023, 1, 'Y');
+INSERT INTO Student VALUES (102, 'Bob', 'Jones', 'M', 'bob@example.com', '9876543211', 2022, 2, 'Y');
+INSERT INTO Student VALUES (103, 'Clara', 'Brown', 'F', 'clara@example.com', '9876543212', 2023, 3, 'Y');
+
+-- Insert into Hostel_Block
+INSERT INTO Hostel_Block VALUES (1, 'Block A', '123 Uni Road', 'Near Library', 'CityX', '123456', 50, 'Mixed');
+INSERT INTO Hostel_Block VALUES (2, 'Block B', '456 Uni Road', 'Next to Canteen', 'CityX', '123457', 60, 'F');
+INSERT INTO Hostel_Block VALUES (3, 'Block C', '789 Uni Road', 'Opposite Admin', 'CityX', '123458', 40, 'M');
+
+-- Insert into Room_Type
+INSERT INTO Room_Type VALUES (1, 'Single', 'Single occupancy room', 1, 0.00);
+INSERT INTO Room_Type VALUES (2, 'Double', 'Double occupancy room', 2, -50.00);
+INSERT INTO Room_Type VALUES (3, 'Ensuite', 'Single with bathroom', 1, 100.00);
+
+-- Insert into Room
+INSERT INTO Room VALUES (1, 1, '101', 1, 1, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (2, 1, '102', 2, 1, 2, 450.00, 'Y');
+INSERT INTO Room VALUES (3, 2, '201', 3, 2, 1, 600.00, 'Y');
+
+-- Insert into Allocation
+INSERT INTO Allocation VALUES (1001, 101, 1, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1002, 102, 2, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1003, 103, 3, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+
+-- Insert into Rent_Invoice
+INSERT INTO Rent_Invoice VALUES (5001, 1001, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 500.00, 0.00, 500.00, TO_DATE('2024-08-25', 'YYYY-MM-DD'), TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5002, 1002, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 450.00, 0.00, 450.00, TO_DATE('2024-08-25', 'YYYY-MM-DD'), TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5003, 1003, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 600.00, 0.00, 600.00, TO_DATE('2024-08-25', 'YYYY-MM-DD'), TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'Open');
+
+-- Insert into Payment_Method
+INSERT INTO Payment_Method VALUES (1, 'Cash', 'Cash Payment', 'Y');
+INSERT INTO Payment_Method VALUES (2, 'Card', 'Debit/Credit Card', 'Y');
+INSERT INTO Payment_Method VALUES (3, 'Bank Transfer', 'Online Transfer', 'Y');
+
+-- Insert into Rent_Payment
+INSERT INTO Rent_Payment VALUES (9001, 5001, 101, 1, 500.00, TO_DATE('2024-09-05', 'YYYY-MM-DD'), 'TXN101', NULL);
+INSERT INTO Rent_Payment VALUES (9002, 5002, 102, 2, 450.00, TO_DATE('2024-09-06', 'YYYY-MM-DD'), 'TXN102', NULL);
+INSERT INTO Rent_Payment VALUES (9003, 5003, 103, 3, 600.00, TO_DATE('2024-09-07', 'YYYY-MM-DD'), 'TXN103', NULL);
+
+INSERT INTO Student VALUES (101, 'Alice', 'Smith', 'F', 'alice.smith@example.com', '9876500001', 2023, 1, 'Y');
+INSERT INTO Student VALUES (102, 'Bob', 'Jones', 'M', 'bob.jones@example.com', '9876500002', 2022, 2, 'Y');
+INSERT INTO Student VALUES (103, 'Clara', 'Brown', 'F', 'clara.brown@example.com', '9876500003', 2023, 3, 'Y');
+INSERT INTO Student VALUES (104, 'David', 'Wilson', 'M', 'david.wilson@example.com', '9876500004', 2023, 1, 'Y');
+INSERT INTO Student VALUES (105, 'Eva', 'Miller', 'F', 'eva.miller@example.com', '9876500005', 2022, 1, 'Y');
+INSERT INTO Student VALUES (106, 'Frank', 'Davis', 'M', 'frank.davis@example.com', '9876500006', 2023, 2, 'Y');
+INSERT INTO Student VALUES (107, 'Grace', 'Lee', 'F', 'grace.lee@example.com', '9876500007', 2023, 3, 'Y');
+INSERT INTO Student VALUES (108, 'Henry', 'Clark', 'M', 'henry.clark@example.com', '9876500008', 2022, 2, 'Y');
+INSERT INTO Student VALUES (109, 'Ivy', 'Lewis', 'F', 'ivy.lewis@example.com', '9876500009', 2023, 3, 'Y');
+INSERT INTO Student VALUES (110, 'Jake', 'Walker', 'M', 'jake.walker@example.com', '9876500010', 2023, 1, 'Y');
+INSERT INTO Student VALUES (111, 'Kara', 'Hall', 'F', 'kara.hall@example.com', '9876500011', 2023, 1, 'Y');
+INSERT INTO Student VALUES (112, 'Leo', 'Allen', 'M', 'leo.allen@example.com', '9876500012', 2023, 2, 'Y');
+INSERT INTO Student VALUES (113, 'Maya', 'Young', 'F', 'maya.young@example.com', '9876500013', 2022, 3, 'Y');
+INSERT INTO Student VALUES (114, 'Nate', 'Hernandez', 'M', 'nate.hernandez@example.com', '9876500014', 2023, 1, 'Y');
+INSERT INTO Student VALUES (115, 'Olivia', 'King', 'F', 'olivia.king@example.com', '9876500015', 2023, 2, 'Y');
+INSERT INTO Student VALUES (116, 'Paul', 'Wright', 'M', 'paul.wright@example.com', '9876500016', 2022, 2, 'Y');
+INSERT INTO Student VALUES (117, 'Quinn', 'Lopez', 'O', 'quinn.lopez@example.com', '9876500017', 2023, 3, 'Y');
+INSERT INTO Student VALUES (118, 'Rita', 'Hill', 'F', 'rita.hill@example.com', '9876500018', 2022, 1, 'Y');
+INSERT INTO Student VALUES (119, 'Sam', 'Scott', 'M', 'sam.scott@example.com', '9876500019', 2023, 3, 'Y');
+INSERT INTO Student VALUES (120, 'Tina', 'Green', 'F', 'tina.green@example.com', '9876500020', 2023, 1, 'Y');
+
+
+CREATE TABLE Student_EmergencyContact (
+    contact_id INT PRIMARY KEY,
+    student_id INT,
+    contact_name VARCHAR2(100),
+    relationship VARCHAR2(50),
+    phone_number VARCHAR2(20),
+    FOREIGN KEY (student_id) REFERENCES Student(student_id)
+);
+
+INSERT INTO Student_EmergencyContact VALUES (1, 101, 'John Smith', 'Father', '9876001001');
+INSERT INTO Student_EmergencyContact VALUES (2, 102, 'Laura Jones', 'Mother', '9876001002');
+INSERT INTO Student_EmergencyContact VALUES (3, 103, 'Mike Brown', 'Brother', '9876001003');
+INSERT INTO Student_EmergencyContact VALUES (4, 104, 'Sarah Wilson', 'Sister', '9876001004');
+INSERT INTO Student_EmergencyContact VALUES (5, 105, 'Mark Miller', 'Father', '9876001005');
+INSERT INTO Student_EmergencyContact VALUES (6, 106, 'Emma Davis', 'Mother', '9876001006');
+INSERT INTO Student_EmergencyContact VALUES (7, 107, 'Tom Lee', 'Uncle', '9876001007');
+INSERT INTO Student_EmergencyContact VALUES (8, 108, 'Nancy Clark', 'Aunt', '9876001008');
+INSERT INTO Student_EmergencyContact VALUES (9, 109, 'Chris Lewis', 'Brother', '9876001009');
+INSERT INTO Student_EmergencyContact VALUES (10, 110, 'Ella Walker', 'Mother', '9876001010');
+INSERT INTO Student_EmergencyContact VALUES (11, 111, 'Jake Hall', 'Father', '9876001011');
+INSERT INTO Student_EmergencyContact VALUES (12, 112, 'Mina Allen', 'Mother', '9876001012');
+INSERT INTO Student_EmergencyContact VALUES (13, 113, 'Raj Young', 'Father', '9876001013');
+INSERT INTO Student_EmergencyContact VALUES (14, 114, 'Lily Hernandez', 'Sister', '9876001014');
+INSERT INTO Student_EmergencyContact VALUES (15, 115, 'David King', 'Uncle', '9876001015');
+INSERT INTO Student_EmergencyContact VALUES (16, 116, 'Kara Wright', 'Mother', '9876001016');
+INSERT INTO Student_EmergencyContact VALUES (17, 117, 'James Lopez', 'Father', '9876001017');
+INSERT INTO Student_EmergencyContact VALUES (18, 118, 'Nina Hill', 'Mother', '9876001018');
+INSERT INTO Student_EmergencyContact VALUES (19, 119, 'Robert Scott', 'Father', '9876001019');
+INSERT INTO Student_EmergencyContact VALUES (20, 120, 'Sophia Green', 'Sister', '9876001020');
+
+
+
+-- Room Allocations for 20 students (student_id 101 to 120, room_id 1 to 20)
+INSERT INTO Allocation VALUES (1001, 101, 1, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1002, 102, 2, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1003, 103, 3, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1004, 104, 4, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1005, 105, 5, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1006, 106, 6, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1007, 107, 7, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1008, 108, 8, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1009, 109, 9, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1010, 110, 10, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1011, 111, 11, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1012, 112, 12, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1013, 113, 13, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1014, 114, 14, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1015, 115, 15, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1016, 116, 16, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1017, 117, 17, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1018, 118, 18, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1019, 119, 19, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+INSERT INTO Allocation VALUES (1020, 120, 20, TO_DATE('2024-09-01', 'YYYY-MM-DD'), NULL, 'Active', NULL);
+
+
+INSERT INTO Room VALUES (4, 1, '103', 1, 1, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (5, 1, '104', 2, 1, 2, 450.00, 'Y');
+INSERT INTO Room VALUES (6, 1, '105', 3, 1, 1, 600.00, 'Y');
+INSERT INTO Room VALUES (7, 1, '106', 1, 1, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (8, 1, '107', 2, 1, 2, 450.00, 'Y');
+INSERT INTO Room VALUES (9, 1, '108', 3, 1, 1, 600.00, 'Y');
+INSERT INTO Room VALUES (10, 2, '201', 1, 2, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (11, 2, '202', 2, 2, 2, 450.00, 'Y');
+INSERT INTO Room VALUES (12, 2, '203', 3, 2, 1, 600.00, 'Y');
+INSERT INTO Room VALUES (13, 2, '204', 1, 2, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (14, 2, '205', 2, 2, 2, 450.00, 'Y');
+INSERT INTO Room VALUES (15, 2, '206', 3, 2, 1, 600.00, 'Y');
+INSERT INTO Room VALUES (16, 3, '301', 1, 3, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (17, 3, '302', 2, 3, 2, 450.00, 'Y');
+INSERT INTO Room VALUES (18, 3, '303', 3, 3, 1, 600.00, 'Y');
+INSERT INTO Room VALUES (19, 3, '304', 1, 3, 1, 500.00, 'Y');
+INSERT INTO Room VALUES (20, 3, '305', 2, 3, 2, 450.00, 'Y');
+
+
+CREATE TABLE Complaint (
+    complaint_id INT PRIMARY KEY,
+    student_id INT,
+    rent_invoice_id INT,
+    request_type_id INT,
+    assigned_staff_id INT,
+    status VARCHAR2(20),
+    description VARCHAR2(1000),
+    date_raised DATE DEFAULT SYSDATE,
+    FOREIGN KEY (student_id) REFERENCES Student(student_id),
+    FOREIGN KEY (rent_invoice_id) REFERENCES Rent_Invoice(invoice_id),
+    FOREIGN KEY (request_type_id) REFERENCES Request_Type(request_type_id),
+    FOREIGN KEY (assigned_staff_id) REFERENCES Staff(staff_id)
+);
+
+CREATE TABLE Request_Type (
+    request_type_id INT PRIMARY KEY,
+    type_name VARCHAR2(100) UNIQUE NOT NULL,
+    severity VARCHAR2(20),
+    description VARCHAR2(500)
+);
+
+-- Room features (e.g., AC, attached bathroom, Wi-Fi)
+CREATE TABLE Room_Feature (
+    feature_id INT PRIMARY KEY,
+    feature_name VARCHAR2(100) UNIQUE,
+    description VARCHAR2(500)
+);
+
+-- Mapping table between Room and Room_Feature
+CREATE TABLE Room_Has_Feature (
+    room_id INT,
+    feature_id INT,
+    PRIMARY KEY (room_id, feature_id),
+    FOREIGN KEY (room_id) REFERENCES Room(room_id),
+    FOREIGN KEY (feature_id) REFERENCES Room_Feature(feature_id)
+);
+CREATE TABLE Staff (
+    staff_id INT PRIMARY KEY,
+    first_name VARCHAR2(50),
+    last_name VARCHAR2(50),
+    email VARCHAR2(100) UNIQUE,
+    phone_number VARCHAR2(20),
+    role_id INT,
+    department_id INT,
+    is_active CHAR(1) DEFAULT 'Y',
+    FOREIGN KEY (role_id) REFERENCES Staff_Role(role_id),
+    FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+
+CREATE TABLE Staff_Role (
+    role_id INT PRIMARY KEY,
+    role_name VARCHAR2(50) UNIQUE,
+    role_description VARCHAR2(255)
+);
+
+
+CREATE TABLE Notification (
+    notification_id INT PRIMARY KEY,
+    recipient_student_id INT,
+    message VARCHAR2(1000),
+    notification_type VARCHAR2(50),
+    date_sent DATE DEFAULT SYSDATE,
+    FOREIGN KEY (recipient_student_id) REFERENCES Student(student_id)
+);
+
+INSERT INTO Request_Type VALUES (1, 'Plumbing Issue', 'High', 'Water leakage, broken taps, clogged drains');
+INSERT INTO Request_Type VALUES (2, 'Internet Problem', 'Medium', 'No connectivity or slow speed');
+INSERT INTO Request_Type VALUES (3, 'Electricity Issue', 'High', 'No power, fused lights, broken sockets');
+INSERT INTO Request_Type VALUES (4, 'Cleanliness', 'Low', 'Unclean bathroom, garbage not collected');
+INSERT INTO Request_Type VALUES (5, 'Furniture Damage', 'Medium', 'Broken bed, table, chair, etc.');
+
+INSERT INTO Room_Feature VALUES (1, 'Air Conditioning', 'Includes AC unit');
+INSERT INTO Room_Feature VALUES (2, 'Attached Bathroom', 'Private bathroom inside the room');
+INSERT INTO Room_Feature VALUES (3, 'Wi-Fi', 'High-speed wireless internet');
+INSERT INTO Room_Feature VALUES (4, 'Balcony', 'Private balcony');
+INSERT INTO Room_Feature VALUES (5, 'Heater', 'Room has heating facility');
+
+
+
+-- Room 1
+INSERT INTO Room_Has_Feature VALUES (1, 1);
+INSERT INTO Room_Has_Feature VALUES (1, 2);
+
+-- Room 2
+INSERT INTO Room_Has_Feature VALUES (2, 1);
+INSERT INTO Room_Has_Feature VALUES (2, 3);
+
+-- Room 3
+INSERT INTO Room_Has_Feature VALUES (3, 2);
+INSERT INTO Room_Has_Feature VALUES (3, 3);
+INSERT INTO Room_Has_Feature VALUES (3, 4);
+
+-- Room 4
+INSERT INTO Room_Has_Feature VALUES (4, 1);
+INSERT INTO Room_Has_Feature VALUES (4, 4);
+
+-- Room 5
+INSERT INTO Room_Has_Feature VALUES (5, 1);
+INSERT INTO Room_Has_Feature VALUES (5, 2);
+INSERT INTO Room_Has_Feature VALUES (5, 5);
+
+-- Room 6
+INSERT INTO Room_Has_Feature VALUES (6, 3);
+INSERT INTO Room_Has_Feature VALUES (6, 4);
+
+-- Room 7
+INSERT INTO Room_Has_Feature VALUES (7, 1);
+INSERT INTO Room_Has_Feature VALUES (7, 5);
+
+-- Room 8
+INSERT INTO Room_Has_Feature VALUES (8, 2);
+INSERT INTO Room_Has_Feature VALUES (8, 3);
+
+-- Room 9
+INSERT INTO Room_Has_Feature VALUES (9, 1);
+INSERT INTO Room_Has_Feature VALUES (9, 3);
+INSERT INTO Room_Has_Feature VALUES (9, 4);
+
+-- Room 10
+INSERT INTO Room_Has_Feature VALUES (10, 2);
+INSERT INTO Room_Has_Feature VALUES (10, 5);
+
+-- Room 11
+INSERT INTO Room_Has_Feature VALUES (11, 1);
+INSERT INTO Room_Has_Feature VALUES (11, 2);
+INSERT INTO Room_Has_Feature VALUES (11, 4);
+
+-- Room 12
+INSERT INTO Room_Has_Feature VALUES (12, 3);
+INSERT INTO Room_Has_Feature VALUES (12, 5);
+
+-- Room 13
+INSERT INTO Room_Has_Feature VALUES (13, 1);
+INSERT INTO Room_Has_Feature VALUES (13, 3);
+
+-- Room 14
+INSERT INTO Room_Has_Feature VALUES (14, 2);
+INSERT INTO Room_Has_Feature VALUES (14, 4);
+
+-- Room 15
+INSERT INTO Room_Has_Feature VALUES (15, 1);
+INSERT INTO Room_Has_Feature VALUES (15, 2);
+INSERT INTO Room_Has_Feature VALUES (15, 5);
+
+-- Room 16
+INSERT INTO Room_Has_Feature VALUES (16, 3);
+INSERT INTO Room_Has_Feature VALUES (16, 4);
+
+-- Room 17
+INSERT INTO Room_Has_Feature VALUES (17, 1);
+INSERT INTO Room_Has_Feature VALUES (17, 4);
+
+-- Room 18
+INSERT INTO Room_Has_Feature VALUES (18, 2);
+INSERT INTO Room_Has_Feature VALUES (18, 5);
+
+-- Room 19
+INSERT INTO Room_Has_Feature VALUES (19, 1);
+INSERT INTO Room_Has_Feature VALUES (19, 3);
+INSERT INTO Room_Has_Feature VALUES (19, 4);
+
+-- Room 20
+INSERT INTO Room_Has_Feature VALUES (20, 2);
+INSERT INTO Room_Has_Feature VALUES (20, 3);
+INSERT INTO Room_Has_Feature VALUES (20, 5);
+
+INSERT INTO Complaint VALUES (1001, 101, 5001, 1, NULL, 'Open', 'There is a water leakage in my bathroom.', TO_DATE('2024-09-05', 'YYYY-MM-DD'));
+INSERT INTO Complaint VALUES (1002, 102, 5002, 2, NULL, 'Open', 'Wi-Fi is not working in my room.', TO_DATE('2024-09-06', 'YYYY-MM-DD'));
+INSERT INTO Complaint VALUES (1003, 103, 5003, 3, NULL, 'Open', 'One of the plug points is sparking.', TO_DATE('2024-09-07', 'YYYY-MM-DD'));
+
+INSERT INTO Notification VALUES (1, 101, 'Your complaint about plumbing has been received.', 'Complaint', TO_DATE('2024-09-06', 'YYYY-MM-DD'));
+INSERT INTO Notification VALUES (2, 102, 'Wi-Fi issue is being resolved. Please wait 24 hours.', 'Update', TO_DATE('2024-09-07', 'YYYY-MM-DD'));
+INSERT INTO Notification VALUES (3, 103, 'Reminder: Pay rent by 10th Sep to avoid late fees.', 'Reminder', TO_DATE('2024-09-08', 'YYYY-MM-DD'));
+
+
+INSERT INTO Rent_Payment VALUES (9001, 5001, 1001, 1, 500.00, TO_DATE('2024-09-05', 'YYYY-MM-DD'), 'TXN101', NULL);
+INSERT INTO Rent_Payment VALUES (9002, 5002, 1002, 2, 450.00, TO_DATE('2024-09-06', 'YYYY-MM-DD'), 'TXN102', NULL);
+INSERT INTO Rent_Payment VALUES (9003, 5003, 1003, 3, 600.00, TO_DATE('2024-09-07', 'YYYY-MM-DD'), 'TXN103', NULL);
+INSERT INTO Rent_Payment VALUES (9004, 5004, 1004, 1, 520.00, TO_DATE('2024-09-08', 'YYYY-MM-DD'), 'TXN104', NULL);
+INSERT INTO Rent_Payment VALUES (9005, 5005, 1005, 2, 480.00, TO_DATE('2024-09-09', 'YYYY-MM-DD'), 'TXN105', NULL);
+INSERT INTO Rent_Payment VALUES (9006, 5006, 1006, 3, 510.00, TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'TXN106', NULL);
+INSERT INTO Rent_Payment VALUES (9007, 5007, 1007, 1, 495.00, TO_DATE('2024-09-11', 'YYYY-MM-DD'), 'TXN107', NULL);
+INSERT INTO Rent_Payment VALUES (9008, 5008, 1008, 2, 530.00, TO_DATE('2024-09-12', 'YYYY-MM-DD'), 'TXN108', NULL);
+INSERT INTO Rent_Payment VALUES (9009, 5009, 1009, 3, 470.00, TO_DATE('2024-09-13', 'YYYY-MM-DD'), 'TXN109', NULL);
+INSERT INTO Rent_Payment VALUES (9010, 5010, 1010, 1, 550.00, TO_DATE('2024-09-14', 'YYYY-MM-DD'), 'TXN110', NULL);
+
+INSERT INTO Rent_Payment VALUES (9011, 5011, 1011, 2, 490.00, TO_DATE('2024-09-15', 'YYYY-MM-DD'), 'TXN111', NULL);
+INSERT INTO Rent_Payment VALUES (9012, 5012, 1012, 3, 505.00, TO_DATE('2024-09-16', 'YYYY-MM-DD'), 'TXN112', NULL);
+INSERT INTO Rent_Payment VALUES (9013, 5013, 1013, 1, 525.00, TO_DATE('2024-09-17', 'YYYY-MM-DD'), 'TXN113', NULL);
+INSERT INTO Rent_Payment VALUES (9014, 5014, 1014, 2, 540.00, TO_DATE('2024-09-18', 'YYYY-MM-DD'), 'TXN114', NULL);
+INSERT INTO Rent_Payment VALUES (9015, 5015, 1015, 3, 515.00, TO_DATE('2024-09-19', 'YYYY-MM-DD'), 'TXN115', NULL);
+INSERT INTO Rent_Payment VALUES (9016, 5016, 1016, 1, 460.00, TO_DATE('2024-09-20', 'YYYY-MM-DD'), 'TXN116', NULL);
+INSERT INTO Rent_Payment VALUES (9017, 5017, 1017, 2, 600.00, TO_DATE('2024-09-21', 'YYYY-MM-DD'), 'TXN117', NULL);
+INSERT INTO Rent_Payment VALUES (9018, 5018, 1018, 3, 470.00, TO_DATE('2024-09-22', 'YYYY-MM-DD'), 'TXN118', NULL);
+INSERT INTO Rent_Payment VALUES (9019, 5019, 1019, 1, 550.00, TO_DATE('2024-09-23', 'YYYY-MM-DD'), 'TXN119', NULL);
+INSERT INTO Rent_Payment VALUES (9020, 5020, 1020, 2, 485.00, TO_DATE('2024-09-24', 'YYYY-MM-DD'), 'TXN120', NULL);
+
+
+
+INSERT INTO Rent_Invoice VALUES (5001, 1001, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 500.00, 0.00, 500.00, TO_DATE('2024-09-02', 'YYYY-MM-DD'), TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5002, 1002, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 450.00, 0.00, 450.00, TO_DATE('2024-09-05', 'YYYY-MM-DD'), TO_DATE('2024-09-12', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5003, 1003, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 600.00, 0.00, 600.00, TO_DATE('2024-09-03', 'YYYY-MM-DD'), TO_DATE('2024-09-15', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5004, 1004, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 520.00, 0.00, 520.00, TO_DATE('2024-09-06', 'YYYY-MM-DD'), TO_DATE('2024-09-14', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5005, 1005, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 480.00, 0.00, 480.00, TO_DATE('2024-09-04', 'YYYY-MM-DD'), TO_DATE('2024-09-18', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5006, 1006, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 510.00, 0.00, 510.00, TO_DATE('2024-09-08', 'YYYY-MM-DD'), TO_DATE('2024-09-20', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5007, 1007, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 495.00, 0.00, 495.00, TO_DATE('2024-09-09', 'YYYY-MM-DD'), TO_DATE('2024-09-19', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5008, 1008, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 530.00, 0.00, 530.00, TO_DATE('2024-09-11', 'YYYY-MM-DD'), TO_DATE('2024-09-21', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5009, 1009, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 470.00, 0.00, 470.00, TO_DATE('2024-09-07', 'YYYY-MM-DD'), TO_DATE('2024-09-16', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5010, 1010, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 550.00, 0.00, 550.00, TO_DATE('2024-09-13', 'YYYY-MM-DD'), TO_DATE('2024-09-23', 'YYYY-MM-DD'), 'Open');
+
+INSERT INTO Rent_Invoice VALUES (5011, 1011, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 490.00, 0.00, 490.00, TO_DATE('2024-09-14', 'YYYY-MM-DD'), TO_DATE('2024-09-24', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5012, 1012, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 505.00, 0.00, 505.00, TO_DATE('2024-09-15', 'YYYY-MM-DD'), TO_DATE('2024-09-25', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5013, 1013, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 525.00, 0.00, 525.00, TO_DATE('2024-09-17', 'YYYY-MM-DD'), TO_DATE('2024-09-26', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5014, 1014, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 540.00, 0.00, 540.00, TO_DATE('2024-09-16', 'YYYY-MM-DD'), TO_DATE('2024-09-27', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5015, 1015, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 515.00, 0.00, 515.00, TO_DATE('2024-09-18', 'YYYY-MM-DD'), TO_DATE('2024-09-28', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5016, 1016, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 460.00, 0.00, 460.00, TO_DATE('2024-09-19', 'YYYY-MM-DD'), TO_DATE('2024-09-29', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5017, 1017, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 600.00, 0.00, 600.00, TO_DATE('2024-09-20', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5018, 1018, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 470.00, 0.00, 470.00, TO_DATE('2024-09-21', 'YYYY-MM-DD'), TO_DATE('2024-09-09', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5019, 1019, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 550.00, 0.00, 550.00, TO_DATE('2024-09-22', 'YYYY-MM-DD'), TO_DATE('2024-09-11', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5020, 1020, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 485.00, 0.00, 485.00, TO_DATE('2024-09-23', 'YYYY-MM-DD'), TO_DATE('2024-09-17', 'YYYY-MM-DD'), 'Open');
+
+
+
+
+INSERT INTO Rent_Invoice VALUES (5001, 1001, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 500.00, 0.00, 500.00, TO_DATE('2024-09-02', 'YYYY-MM-DD'), TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5002, 1002, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 450.00, 0.00, 450.00, TO_DATE('2024-09-05', 'YYYY-MM-DD'), TO_DATE('2024-09-12', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5003, 1003, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 600.00, 0.00, 600.00, TO_DATE('2024-09-03', 'YYYY-MM-DD'), TO_DATE('2024-09-15', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5004, 1004, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 520.00, 0.00, 520.00, TO_DATE('2024-09-06', 'YYYY-MM-DD'), TO_DATE('2024-09-14', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5005, 1005, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 480.00, 0.00, 480.00, TO_DATE('2024-09-04', 'YYYY-MM-DD'), TO_DATE('2024-09-18', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5006, 1006, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 510.00, 0.00, 510.00, TO_DATE('2024-09-08', 'YYYY-MM-DD'), TO_DATE('2024-09-20', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5007, 1007, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 495.00, 0.00, 495.00, TO_DATE('2024-09-09', 'YYYY-MM-DD'), TO_DATE('2024-09-19', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5008, 1008, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 530.00, 0.00, 530.00, TO_DATE('2024-09-11', 'YYYY-MM-DD'), TO_DATE('2024-09-21', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5009, 1009, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 470.00, 0.00, 470.00, TO_DATE('2024-09-07', 'YYYY-MM-DD'), TO_DATE('2024-09-16', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5010, 1010, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 550.00, 0.00, 550.00, TO_DATE('2024-09-13', 'YYYY-MM-DD'), TO_DATE('2024-09-23', 'YYYY-MM-DD'), 'Open');
+
+INSERT INTO Rent_Invoice VALUES (5011, 1011, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 490.00, 0.00, 490.00, TO_DATE('2024-09-14', 'YYYY-MM-DD'), TO_DATE('2024-09-24', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5012, 1012, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 505.00, 0.00, 505.00, TO_DATE('2024-09-15', 'YYYY-MM-DD'), TO_DATE('2024-09-25', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5013, 1013, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 525.00, 0.00, 525.00, TO_DATE('2024-09-17', 'YYYY-MM-DD'), TO_DATE('2024-09-26', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5014, 1014, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 540.00, 0.00, 540.00, TO_DATE('2024-09-16', 'YYYY-MM-DD'), TO_DATE('2024-09-27', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5015, 1015, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 515.00, 0.00, 515.00, TO_DATE('2024-09-18', 'YYYY-MM-DD'), TO_DATE('2024-09-28', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5016, 1016, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 460.00, 0.00, 460.00, TO_DATE('2024-09-19', 'YYYY-MM-DD'), TO_DATE('2024-09-29', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5017, 1017, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 600.00, 0.00, 600.00, TO_DATE('2024-09-20', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5018, 1018, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 470.00, 0.00, 470.00, TO_DATE('2024-09-21', 'YYYY-MM-DD'), TO_DATE('2024-09-09', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5019, 1019, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 550.00, 0.00, 550.00, TO_DATE('2024-09-22', 'YYYY-MM-DD'), TO_DATE('2024-09-11', 'YYYY-MM-DD'), 'Open');
+INSERT INTO Rent_Invoice VALUES (5020, 1020, TO_DATE('2024-09-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 485.00, 0.00, 485.00, TO_DATE('2024-09-23', 'YYYY-MM-DD'), TO_DATE('2024-09-17', 'YYYY-MM-DD'), 'Open');
+
+
+
+
+INSERT INTO Rent_Payment VALUES (9001, 5001, 101, 1, 500.00, TO_DATE('2024-09-05', 'YYYY-MM-DD'), 'TXN101', NULL);
+INSERT INTO Rent_Payment VALUES (9002, 5002, 102, 2, 450.00, TO_DATE('2024-09-06', 'YYYY-MM-DD'), 'TXN102', NULL);
+INSERT INTO Rent_Payment VALUES (9003, 5003, 103, 3, 600.00, TO_DATE('2024-09-07', 'YYYY-MM-DD'), 'TXN103', NULL);
+INSERT INTO Rent_Payment VALUES (9004, 5004, 104, 1, 520.00, TO_DATE('2024-09-08', 'YYYY-MM-DD'), 'TXN104', NULL);
+INSERT INTO Rent_Payment VALUES (9005, 5005, 105, 2, 480.00, TO_DATE('2024-09-09', 'YYYY-MM-DD'), 'TXN105', NULL);
+INSERT INTO Rent_Payment VALUES (9006, 5006, 106, 3, 510.00, TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'TXN106', NULL);
+INSERT INTO Rent_Payment VALUES (9007, 5007, 107, 1, 495.00, TO_DATE('2024-09-11', 'YYYY-MM-DD'), 'TXN107', NULL);
+INSERT INTO Rent_Payment VALUES (9008, 5008, 108, 2, 530.00, TO_DATE('2024-09-12', 'YYYY-MM-DD'), 'TXN108', NULL);
+INSERT INTO Rent_Payment VALUES (9009, 5009, 109, 3, 470.00, TO_DATE('2024-09-13', 'YYYY-MM-DD'), 'TXN109', NULL);
+INSERT INTO Rent_Payment VALUES (9010, 5010, 110, 1, 550.00, TO_DATE('2024-09-14', 'YYYY-MM-DD'), 'TXN110', NULL);
+
+INSERT INTO Rent_Payment VALUES (9011, 5011, 111, 2, 490.00, TO_DATE('2024-09-15', 'YYYY-MM-DD'), 'TXN111', NULL);
+INSERT INTO Rent_Payment VALUES (9012, 5012, 112, 3, 505.00, TO_DATE('2024-09-16', 'YYYY-MM-DD'), 'TXN112', NULL);
+INSERT INTO Rent_Payment VALUES (9013, 5013, 113, 1, 525.00, TO_DATE('2024-09-17', 'YYYY-MM-DD'), 'TXN113', NULL);
+INSERT INTO Rent_Payment VALUES (9014, 5014, 114, 2, 540.00, TO_DATE('2024-09-18', 'YYYY-MM-DD'), 'TXN114', NULL);
+INSERT INTO Rent_Payment VALUES (9015, 5015, 115, 3, 515.00, TO_DATE('2024-09-19', 'YYYY-MM-DD'), 'TXN115', NULL);
+INSERT INTO Rent_Payment VALUES (9016, 5016, 116, 1, 460.00, TO_DATE('2024-09-20', 'YYYY-MM-DD'), 'TXN116', NULL);
+INSERT INTO Rent_Payment VALUES (9017, 5017, 117, 2, 600.00, TO_DATE('2024-09-21', 'YYYY-MM-DD'), 'TXN117', NULL);
+INSERT INTO Rent_Payment VALUES (9018, 5018, 118, 3, 470.00, TO_DATE('2024-09-22', 'YYYY-MM-DD'), 'TXN118', NULL);
+INSERT INTO Rent_Payment VALUES (9019, 5019, 119, 1, 550.00, TO_DATE('2024-09-23', 'YYYY-MM-DD'), 'TXN119', NULL);
+INSERT INTO Rent_Payment VALUES (9020, 5020, 120, 2, 485.00, TO_DATE('2024-09-24', 'YYYY-MM-DD'), 'TXN120', NULL);
+
+
+INSERT INTO Staff_Role VALUES (1, 'Warden', 'Handles hostel operations');
+INSERT INTO Staff_Role VALUES (2, 'Maintenance Officer', 'Handles repair issues');
+INSERT INTO Staff_Role VALUES (3, 'Finance Clerk', 'Handles invoices and payments');
+
+INSERT INTO Staff VALUES (1, 'Rahul', 'Verma', 'rahul.verma@university.edu', '9876111111', 1, 1, 'Y');
+INSERT INTO Staff VALUES (2, 'Anita', 'Patil', 'anita.patil@university.edu', '9876222222', 2, 1, 'Y');
+INSERT INTO Staff VALUES (3, 'Mohit', 'Sharma', 'mohit.sharma@university.edu', '9876333333', 3, 1, 'Y');
+
+
+UPDATE Rent_payment SET RECORDED_BY_STAFF_ID = 10 WHERE PAYMENT_ID BETWEEN 9001 AND 9008;
+UPDATE Rent_payment SET RECORDED_BY_STAFF_ID = 3 WHERE PAYMENT_ID BETWEEN 9009 AND 9014;
+UPDATE Rent_payment SET RECORDED_BY_STAFF_ID = 5 WHERE PAYMENT_ID BETWEEN 9015 AND 9017;
+UPDATE Rent_payment SET RECORDED_BY_STAFF_ID = 13 WHERE PAYMENT_ID BETWEEN 9018 AND 9020;
+
+Test queries
+SELECT s.student_id, s.first_name, s.last_name, r.room_number, hb.block_name
+FROM Student s
+JOIN Allocation a ON s.student_id = a.student_id
+JOIN Room r ON a.room_id = r.room_id
+JOIN Hostel_Block hb ON r.block_id = hb.block_id
+WHERE a.allocation_end IS NULL OR a.allocation_end > SYSDATE
+ORDER BY s.student_id;
+
+
+SELECT ri.invoice_id, a.student_id, ri.total_due, ri.invoice_status
+FROM Rent_Invoice ri
+JOIN Allocation a ON ri.allocation_id = a.allocation_id
+ORDER BY ri.invoice_id;
+
+SELECT rp.payment_id, rp.invoice_id, rp.amount_paid, pm.method_name
+FROM Rent_Payment rp
+JOIN Payment_Method pm ON rp.payment_method_id = pm.payment_method_id
+ORDER BY rp.payment_date DESC;
+
+SELECT r.room_id, r.room_number,
+       LISTAGG(f.feature_name, ', ') WITHIN GROUP (ORDER BY f.feature_name) AS features
+FROM Room r
+LEFT JOIN Room_Has_Feature rhf ON r.room_id = rhf.room_id
+LEFT JOIN Room_Feature f ON rhf.feature_id = f.feature_id
+GROUP BY r.room_id, r.room_number;
+
+SELECT ri.invoice_id, s.first_name, s.last_name, ri.total_due, ri.due_date
+FROM Rent_Invoice ri
+JOIN Allocation a ON ri.allocation_id = a.allocation_id
+JOIN Student s ON a.student_id = s.student_id
+WHERE ri.invoice_status = 'Open' AND ri.due_date < SYSDATE;
+
+SELECT s.student_id, s.first_name, s.last_name,
+       ec.contact_name, ec.relationship, ec.phone_number
+FROM Student s
+JOIN Student_EmergencyContact ec ON s.student_id = ec.student_id
+ORDER BY s.student_id;
+
+SELECT st.staff_id, st.first_name, st.last_name, sr.role_name
+FROM Staff st
+JOIN Staff_Role sr ON st.role_id = sr.role_id;
+
+SELECT hb.block_name, SUM(rp.amount_paid) AS total_collected
+FROM Rent_Payment rp
+JOIN Rent_Invoice ri ON rp.invoice_id = ri.invoice_id
+JOIN Allocation a ON ri.allocation_id = a.allocation_id
+JOIN Room r ON a.room_id = r.room_id
+JOIN Hostel_Block hb ON r.block_id = hb.block_id
+GROUP BY hb.block_name;
+
+SELECT s.student_id, s.first_name, s.last_name, r.room_number,
+       a.allocation_start, a.allocation_end, a.status
+FROM Allocation a
+JOIN Student s ON a.student_id = s.student_id
+JOIN Room r ON a.room_id = r.room_id
+ORDER BY s.student_id, a.allocation_start;
+
+SELECT rt.type_name, AVG(r.base_rent_amount) AS avg_rent
+FROM Room r
+JOIN Room_Type rt ON r.room_type_id = rt.room_type_id
+GROUP BY rt.type_name;
+
+SELECT rt.type_name, COUNT(c.complaint_id) AS total_complaints
+FROM Complaint c
+JOIN Request_Type rt ON c.request_type_id = rt.request_type_id
+GROUP BY rt.type_name
+ORDER BY total_complaints DESC;
+
+SELECT s.student_id, s.first_name, s.last_name, SUM(rp.amount_paid) AS total_paid
+FROM Rent_Payment rp
+JOIN Student s ON rp.student_id = s.student_id
+GROUP BY s.student_id, s.first_name, s.last_name
+ORDER BY total_paid DESC FETCH FIRST 5 ROWS ONLY;
+
+
+section*{10. Queries}
+
+subsection*{Business Queries}
+
+\subsubsection*{1. Find students with unpaid invoices}
+\textbf{Goal:} Identify students who have pending payments.  
+\begin{verbatim}
+SELECT s.student_id, s.first_name, s.last_name, ri.invoice_id, ri.total_due
+FROM Student s
+JOIN Allocation a ON s.student_id = a.student_id
+JOIN Rent_Invoice ri ON a.allocation_id = ri.allocation_id
+WHERE ri.invoice_status = 'Open'
+ORDER BY ri.due_date;
+\end{verbatim}
+
+\subsubsection*{2. Total revenue collected per hostel block}
+\textbf{Goal:} Track hostel income from rent payments.  
+\begin{verbatim}
+SELECT hb.block_name, SUM(rp.amount_paid) AS total_collected
+FROM Rent_Payment rp
+JOIN Rent_Invoice ri ON rp.invoice_id = ri.invoice_id
+JOIN Allocation a ON ri.allocation_id = a.allocation_id
+JOIN Room r ON a.room_id = r.room_id
+JOIN Hostel_Block hb ON r.block_id = hb.block_id
+GROUP BY hb.block_name;
+\end{verbatim}
+
+\subsubsection*{3. Most common complaint types}
+\textbf{Goal:} Highlight the most frequent issues students raise.  
+\begin{verbatim}
+SELECT rt.type_name, COUNT(c.complaint_id) AS complaint_count
+FROM Complaint c
+JOIN Request_Type rt ON c.request_type_id = rt.request_type_id
+GROUP BY rt.type_name
+ORDER BY complaint_count DESC;
+\end{verbatim}
+
+\subsubsection*{4. Average rent by room type}
+\textbf{Goal:} Provide pricing insights for room categories.  
+\begin{verbatim}
+SELECT rt.type_name, AVG(r.base_rent_amount) AS avg_rent
+FROM Room r
+JOIN Room_Type rt ON r.room_type_id = rt.room_type_id
+GROUP BY rt.type_name;
+\end{verbatim}
+
+\subsubsection*{5. Emergency contacts for students}
+\textbf{Goal:} Quickly retrieve student emergency contacts.  
+\begin{verbatim}
+SELECT s.first_name, s.last_name, ec.contact_name, ec.phone_number
+FROM Student s
+JOIN Student_EmergencyContact ec ON s.student_id = ec.student_id;
+\end{verbatim}
+
+
+
+
+\subsection*{Optimization Queries}
+
+\subsubsection*{Technique 1: Using Indexes}
+\textbf{Goal:} Speed up search for unpaid invoices.  
+\begin{verbatim}
+-- Create index
+CREATE INDEX idx_invoice_status ON Rent_Invoice(invoice_status);
+
+-- Optimized query with index hint
+EXPLAIN PLAN FOR
+SELECT /*+ INDEX(ri idx_invoice_status) */
+       s.student_id, s.first_name, s.last_name, ri.invoice_id, ri.total_due
+FROM Student s
+JOIN Allocation a ON s.student_id = a.student_id
+JOIN Rent_Invoice ri ON a.allocation_id = ri.allocation_id
+WHERE ri.invoice_status = 'Open';
+\end{verbatim}
+
+---
+
+\subsubsection*{Technique 2: Replacing Nested Subqueries with JOINs}
+\textbf{Before (inefficient):}
+\begin{verbatim}
+SELECT s.first_name, s.last_name
+FROM Student s
+WHERE s.student_id IN (
+    SELECT a.student_id
+    FROM Allocation a
+    WHERE a.status = 'Active'
+);
+\end{verbatim}
+
+\textbf{After (optimized with JOIN):}
+\begin{verbatim}
+SELECT DISTINCT s.first_name, s.last_name
+FROM Student s
+JOIN Allocation a ON s.student_id = a.student_id
+WHERE a.status = 'Active';
+\end{verbatim}
+
+---
+
+\subsubsection*{Technique 3: Using LISTAGG for Aggregation}
+\textbf{Goal:} Aggregate room features instead of multiple rows.  
+\begin{verbatim}
+SELECT r.room_number,
+       LISTAGG(f.feature_name, ', ') 
+       WITHIN GROUP (ORDER BY f.feature_name) AS features
+FROM Room r
+JOIN Room_Has_Feature rhf ON r.room_id = rhf.room_id
+JOIN Room_Feature f ON rhf.feature_id = f.feature_id
+GROUP BY r.room_number;
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
